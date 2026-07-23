@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -551,6 +552,20 @@ section{ scroll-margin-top: 70px; }
 }
 .error-msg{ font-size:.8rem; color:#DC3545; min-height: 1em; }
 
+.delivery-note{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background: var(--yellow-soft);
+  border: 1px solid rgba(244,197,66,.5);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--green-deep);
+}
+.delivery-note-icon{ font-size: 1.3rem; }
+
 .btn-loader{
   display:none;
   width:18px; height:18px;
@@ -834,7 +849,7 @@ section{ scroll-margin-top: 70px; }
 
         <div class="field">
           <label for="phone">رقم الهاتف</label>
-          <input type="tel" id="phone" name="phone" placeholder="0555 12 34 56" required>
+          <input type="tel" id="phone" name="phone" required>
           <span class="error-msg" id="err-phone"></span>
         </div>
 
@@ -856,12 +871,9 @@ section{ scroll-margin-top: 70px; }
           <span class="error-msg" id="err-address"></span>
         </div>
 
-        <div class="field">
-          <label for="deliveryType">نوع التوصيل</label>
-          <select id="deliveryType" name="deliveryType" required>
-            <option value="منزل">توصيل إلى المنزل 🏠</option>
-            <option value="مكتب">توصيل إلى المكتب 🏢</option>
-          </select>
+        <div class="delivery-note">
+          <span class="delivery-note-icon">🚚</span>
+          <span>التوصيل مجاني لجميع الولايات</span>
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn">
@@ -1037,7 +1049,6 @@ function initOrderForm() {
     wilaya: { el: document.getElementById("wilaya"), required: true, label: "الولاية" },
     commune: { el: document.getElementById("commune"), required: false, label: "البلدية" },
     address: { el: document.getElementById("address"), required: true, label: "العنوان" },
-    deliveryType: { el: document.getElementById("deliveryType"), required: true, label: "نوع التوصيل" },
   };
 
   function validatePhone(value) {
@@ -1118,23 +1129,13 @@ function initOrderForm() {
       wilaya: fields.wilaya.el.value.trim(),
       commune: fields.commune.el.value.trim(),
       address: fields.address.el.value.trim(),
-      deliveryType: fields.deliveryType.el.value,
+      deliveryType: "توصيل مجاني",
       product: "فلاش الصيف للأطفال",
       price: 2700,
       status: "جديد",
     };
 
     try {
-      // 🧪 وضع المعاينة فقط: بما أن رابط Google Script لم يُضبط بعد،
-      // نحاكي نجاح الإرسال هنا لعرض تجربة المستخدم الكاملة.
-      if (GOOGLE_SCRIPT_URL.includes("YOUR_DEPLOYMENT_ID")) {
-        await new Promise((r) => setTimeout(r, 1200));
-        showFeedback("✅ تم إرسال طلبك بنجاح، سنتصل بك قريبًا. (وضع المعاينة)", "success");
-        form.reset();
-        setLoading(false);
-        return;
-      }
-
       // ملاحظة مهمة: نستخدم "text/plain" بدلاً من "application/json" في الترويسة
       // لتفادي طلب preflight (OPTIONS) الذي لا يدعمه Google Apps Script جيدًا.
       // الخادم (Code.gs) يستقبل ويحلل نفس محتوى JSON بشكل طبيعي عبر e.postData.contents

@@ -4,7 +4,8 @@
 
 // ⚠️ عدّل هذا الرابط برابط Google Apps Script Web App الخاص بك
 // اشرح طريقة الحصول عليه بالتفصيل في ملف README.md
-https://script.google.com/macros/s/AKfycbzf_i4v3yd4TbaD5YAvWi5ERw09kC2JPSls4n52GQ9Cy39YssoTG0JKBekkfLgrQZY/exec
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzf_i4v3yd4TbaD5YAvWi5ERw09kC2JPSls4n52GQ9Cy39YssoTG0JKBekkfLgrQZY/exec";
+
 document.addEventListener("DOMContentLoaded", () => {
   initHeaderReveal();
   initStickyCta();

@@ -230,7 +230,7 @@ section{ scroll-margin-top: 70px; }
   font-weight: 600;
 }
 
-/* --- Hero visual: tablet mock + badges (العنصر المميز) --- */
+/* --- Hero visual: tablet mock + badges --- */
 .hero-visual{
   position: relative;
   display:flex;
@@ -551,6 +551,21 @@ section{ scroll-margin-top: 70px; }
 }
 .error-msg{ font-size:.8rem; color:#DC3545; min-height: 1em; }
 
+/* شريط إشعار التوصيل المجاني */
+.free-shipping-notice {
+  background: rgba(40, 167, 69, 0.1);
+  border: 1.5px dashed var(--green);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--green-deep);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.free-shipping-notice span { font-size: 1.3rem; }
+
 .btn-loader{
   display:none;
   width:18px; height:18px;
@@ -828,40 +843,38 @@ section{ scroll-margin-top: 70px; }
 
         <div class="field">
           <label for="fullName">الاسم الكامل</label>
-          <input type="text" id="fullName" name="fullName" placeholder="مثال: أحمد بن علي" required>
+          <input type="text" id="fullName" name="fullName" required>
           <span class="error-msg" id="err-fullName"></span>
         </div>
 
         <div class="field">
           <label for="phone">رقم الهاتف</label>
-          <input type="tel" id="phone" name="phone" placeholder="0555 12 34 56" required>
+          <input type="tel" id="phone" name="phone" required>
           <span class="error-msg" id="err-phone"></span>
         </div>
 
         <div class="field">
           <label for="wilaya">الولاية</label>
-          <input type="text" id="wilaya" name="wilaya" placeholder="مثال: الجزائر" required>
+          <input type="text" id="wilaya" name="wilaya" required>
           <span class="error-msg" id="err-wilaya"></span>
         </div>
 
         <div class="field">
           <label for="commune">البلدية</label>
-          <input type="text" id="commune" name="commune" placeholder="مثال: باب الزوار">
+          <input type="text" id="commune" name="commune">
           <span class="error-msg" id="err-commune"></span>
         </div>
 
         <div class="field">
           <label for="address">العنوان الكامل</label>
-          <textarea id="address" name="address" rows="2" placeholder="الحي، الشارع، رقم المنزل..." required></textarea>
+          <textarea id="address" name="address" rows="2" required></textarea>
           <span class="error-msg" id="err-address"></span>
         </div>
 
-        <div class="field">
-          <label for="deliveryType">نوع التوصيل</label>
-          <select id="deliveryType" name="deliveryType" required>
-            <option value="منزل">توصيل إلى المنزل 🏠</option>
-            <option value="مكتب">توصيل إلى المكتب 🏢</option>
-          </select>
+        <!-- شريط التوصيل المجاني بدلاً من قائمة الخيارات -->
+        <div class="free-shipping-notice">
+          <span>🚚</span>
+          <div>التوصيل مجاني 100% إلى جميع الولايات</div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn">
@@ -893,8 +906,6 @@ section{ scroll-margin-top: 70px; }
    فلاش الصيف للأطفال — script.js
    ========================================================================== */
 
-// ⚠️ عدّل هذا الرابط برابط Google Apps Script Web App الخاص بك
-// اشرح طريقة الحصول عليه بالتفصيل في ملف README.md
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3PFql4Up08KGnz5AscPL99X1uA0tLAS0bOb10ugmL4fwom65Lk8TNrtZrCsMrlB4r/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -903,7 +914,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initAccordion();
   initSlider();
   initOrderForm();
-  initLazyLoad();
 });
 
 /* --------------------------------------------------------------------------
@@ -973,212 +983,143 @@ function initSlider() {
   const track = document.getElementById("sliderTrack");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
-  const dotsWrap = document.getElementById("sliderDots");
+  const dotsContainer = document.getElementById("sliderDots");
+
   if (!track) return;
 
   const slides = Array.from(track.children);
+  if (slides.length === 0) return;
 
-  // إنشاء النقاط
-  slides.forEach((_, i) => {
-    const dot = document.createElement("span");
-    dot.className = "dot" + (i === 0 ? " active" : "");
-    dot.addEventListener("click", () => scrollToSlide(i));
-    dotsWrap.appendChild(dot);
-  });
-  const dots = Array.from(dotsWrap.children);
-
-  function scrollToSlide(index) {
-    const slide = slides[index];
-    track.scrollTo({ left: slide.offsetLeft - track.offsetLeft, behavior: "smooth" });
-  }
-
-  function updateActiveDot() {
-    const trackCenter = track.scrollLeft + track.clientWidth / 2;
-    let closest = 0;
-    let minDist = Infinity;
-    slides.forEach((slide, i) => {
-      const dist = Math.abs(slide.offsetLeft + slide.clientWidth / 2 - trackCenter);
-      if (dist < minDist) { minDist = dist; closest = i; }
+  slides.forEach((_, idx) => {
+    const dot = document.createElement("div");
+    dot.classList.add("dot");
+    if (idx === 0) dot.classList.add("active");
+    dot.addEventListener("click", () => {
+      slides[idx].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     });
-    dots.forEach((d, i) => d.classList.toggle("active", i === closest));
+    dotsContainer.appendChild(dot);
+  });
+
+  const dots = Array.from(dotsContainer.children);
+
+  track.addEventListener("scroll", () => {
+    const trackRect = track.getBoundingClientRect();
+    let closestIndex = 0;
+    let minDistance = Infinity;
+
+    slides.forEach((slide, idx) => {
+      const slideRect = slide.getBoundingClientRect();
+      const distance = Math.abs((slideRect.left + slideRect.width / 2) - (trackRect.left + trackRect.width / 2));
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = idx;
+      }
+    });
+
+    dots.forEach((d, i) => d.classList.toggle("active", i === closestIndex));
+  });
+
+  if (prevBtn && nextBtn) {
+    prevBtn.addEventListener("click", () => {
+      track.scrollBy({ left: track.clientWidth * 0.8, behavior: "smooth" });
+    });
+    nextBtn.addEventListener("click", () => {
+      track.scrollBy({ left: -track.clientWidth * 0.8, behavior: "smooth" });
+    });
   }
-
-  track.addEventListener("scroll", debounce(updateActiveDot, 100));
-
-  prevBtn?.addEventListener("click", () => {
-    track.scrollBy({ left: track.clientWidth * -0.8, behavior: "smooth" });
-  });
-  nextBtn?.addEventListener("click", () => {
-    track.scrollBy({ left: track.clientWidth * 0.8, behavior: "smooth" });
-  });
-}
-
-function debounce(fn, delay) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
 }
 
 /* --------------------------------------------------------------------------
-   5) نموذج الطلب: تحقق + إرسال إلى Google Sheets
+   5) نموذج الطلب والتحقق وإرسال البيانات
    -------------------------------------------------------------------------- */
 function initOrderForm() {
   const form = document.getElementById("orderForm");
-  if (!form) return;
-
   const submitBtn = document.getElementById("submitBtn");
   const feedback = document.getElementById("formFeedback");
 
-  const fields = {
-    fullName: { el: document.getElementById("fullName"), required: true, label: "الاسم الكامل" },
-    phone: { el: document.getElementById("phone"), required: true, label: "رقم الهاتف" },
-    wilaya: { el: document.getElementById("wilaya"), required: true, label: "الولاية" },
-    commune: { el: document.getElementById("commune"), required: false, label: "البلدية" },
-    address: { el: document.getElementById("address"), required: true, label: "العنوان" },
-    deliveryType: { el: document.getElementById("deliveryType"), required: true, label: "نوع التوصيل" },
-  };
-
-  function validatePhone(value) {
-    // يقبل أرقام جزائرية بصيغ شائعة: 05/06/07 + 8 أرقام، بمسافات أو بدونها
-    const cleaned = value.replace(/[\s-]/g, "");
-    return /^(0)(5|6|7)[0-9]{8}$/.test(cleaned);
-  }
-
-  function showFieldError(key, message) {
-    const field = fields[key];
-    const wrapper = field.el.closest(".field");
-    const errEl = document.getElementById("err-" + key);
-    if (wrapper) wrapper.classList.add("invalid");
-    if (errEl) errEl.textContent = message;
-  }
-
-  function clearFieldError(key) {
-    const field = fields[key];
-    const wrapper = field.el.closest(".field");
-    const errEl = document.getElementById("err-" + key);
-    if (wrapper) wrapper.classList.remove("invalid");
-    if (errEl) errEl.textContent = "";
-  }
-
-  function validateForm() {
-    let isValid = true;
-
-    Object.keys(fields).forEach((key) => clearFieldError(key));
-
-    if (!fields.fullName.el.value.trim()) {
-      showFieldError("fullName", "الرجاء إدخال الاسم الكامل");
-      isValid = false;
-    }
-
-    const phoneVal = fields.phone.el.value.trim();
-    if (!phoneVal) {
-      showFieldError("phone", "الرجاء إدخال رقم الهاتف");
-      isValid = false;
-    } else if (!validatePhone(phoneVal)) {
-      showFieldError("phone", "رقم الهاتف غير صحيح (مثال: 0555123456)");
-      isValid = false;
-    }
-
-    if (!fields.wilaya.el.value.trim()) {
-      showFieldError("wilaya", "الرجاء إدخال الولاية");
-      isValid = false;
-    }
-
-    if (!fields.address.el.value.trim()) {
-      showFieldError("address", "الرجاء إدخال العنوان الكامل");
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  function setLoading(isLoading) {
-    submitBtn.disabled = isLoading;
-    submitBtn.classList.toggle("loading", isLoading);
-  }
-
-  function showFeedback(message, type) {
-    feedback.textContent = message;
-    feedback.className = "form-feedback show " + type;
-  }
+  if (!form) return;
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!validateForm(form)) return;
 
-    setLoading(true);
+    submitBtn.disabled = true;
+    submitBtn.classList.add("loading");
     feedback.className = "form-feedback";
+    feedback.textContent = "";
 
-    const payload = {
-      fullName: fields.fullName.el.value.trim(),
-      phone: fields.phone.el.value.trim(),
-      wilaya: fields.wilaya.el.value.trim(),
-      commune: fields.commune.el.value.trim(),
-      address: fields.address.el.value.trim(),
-      deliveryType: fields.deliveryType.el.value,
-      product: "فلاش الصيف للأطفال",
-      price: 2700,
-      status: "جديد",
-    };
+    const formData = new FormData(form);
 
     try {
-      // ملاحظة مهمة: نستخدم "text/plain" بدلاً من "application/json" في الترويسة
-      // لتفادي طلب preflight (OPTIONS) الذي لا يدعمه Google Apps Script جيدًا.
-      // الخادم (Code.gs) يستقبل ويحلل نفس محتوى JSON بشكل طبيعي عبر e.postData.contents
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
+      await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
+        body: formData,
+        mode: "no-cors"
       });
 
-      // ملاحظة: Google Apps Script قد يرجع استجابة "opaque" بدون CORS كامل
-      // لذلك نتعامل مع النجاح بتفاؤل إن لم يحدث خطأ في الشبكة
-      let result = { result: "success" };
-      try {
-        result = await response.json();
-      } catch (_) {
-        // تجاهل أخطاء تحليل JSON إن كانت الاستجابة غير قابلة للقراءة
-      }
-
-      if (result && result.result === "error") {
-        throw new Error(result.message || "فشل الإرسال");
-      }
-
-      showFeedback("✅ تم إرسال طلبك بنجاح، سنتصل بك قريبًا.", "success");
+      feedback.textContent = "✅ تم استلام طلبك بنجاح! سنتصل بك قريبًا لتأكيد التوصيل.";
+      feedback.classList.add("show", "success");
       form.reset();
+
     } catch (err) {
-      console.error("Order submission error:", err);
-      showFeedback("❌ حدث خطأ أثناء إرسال الطلب. الرجاء المحاولة مرة أخرى أو الاتصال بنا مباشرة.", "error");
+      console.error(err);
+      feedback.textContent = "❌ حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.";
+      feedback.classList.add("show", "error");
     } finally {
-      setLoading(false);
+      submitBtn.disabled = false;
+      submitBtn.classList.remove("loading");
     }
   });
 }
 
-/* --------------------------------------------------------------------------
-   6) تحميل كسول للصور (lazy load)
-   -------------------------------------------------------------------------- */
-function initLazyLoad() {
-  const lazyImages = document.querySelectorAll("img[data-src]");
-  if (!lazyImages.length) return;
+function validateForm(form) {
+  let isValid = true;
+  const fullName = form.querySelector("#fullName");
+  const phone = form.querySelector("#phone");
+  const wilaya = form.querySelector("#wilaya");
+  const address = form.querySelector("#address");
 
-  const observer = new IntersectionObserver((entries, obs) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const img = entry.target;
-        img.src = img.dataset.src;
-        img.removeAttribute("data-src");
-        obs.unobserve(img);
-      }
-    });
-  });
+  form.querySelectorAll(".field").forEach(f => f.classList.remove("invalid"));
+  form.querySelectorAll(".error-msg").forEach(e => e.textContent = "");
 
-  lazyImages.forEach((img) => observer.observe(img));
+  if (!fullName.value.trim()) {
+    showError(fullName, "يرجى إدخال الاسم الكامل");
+    isValid = false;
+  }
+
+  const phoneVal = phone.value.trim();
+  const phoneRegex = /^(05|06|07)[0-9]{8}$/;
+  if (!phoneVal) {
+    showError(phone, "يرجى إدخال رقم الهاتف");
+    isValid = false;
+  } else if (!phoneRegex.test(phoneVal.replace(/\s+/g, ''))) {
+    showError(phone, "يرجى إدخال رقم هاتف جزائري صحيح مكون من 10 أرقام");
+    isValid = false;
+  }
+
+  if (!wilaya.value.trim()) {
+    showError(wilaya, "يرجى إدخال الولاية");
+    isValid = false;
+  }
+
+  if (!address.value.trim()) {
+    showError(address, "يرجى إدخال العنوان الكامل");
+    isValid = false;
+  }
+
+  return isValid;
 }
 
+function showError(input, message) {
+  const field = input.closest(".field");
+  if (field) {
+    field.classList.add("invalid");
+    const errSpan = field.querySelector(".error-msg");
+    if (errSpan) errSpan.textContent = message;
+  }
+}
 </script>
+
 </body>
 </html>
